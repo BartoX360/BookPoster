@@ -2,3 +2,5 @@
 # Rendus de test et capture de l'écran réel
 previews/
 recipe/bookposter.zip
+# Jeton Hardcover de développement
+.hardcover_token

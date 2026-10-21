@@ -94,9 +94,10 @@
 </style>
 
 {% template bookposter %}
-{%- comment -%} deux listes Place des Libraires par rayon (à paraître, juste parus), chacune une page HTML : seule l'en-tête
+{%- comment -%} en français, deux listes Place des Libraires par rayon (à paraître, juste parus), chacune une page HTML : seule l'en-tête
 de ses premiers livres est gardée (titre, auteur, éditeur, date, EAN), null si la page n'a pas pu être chargée {%- endcomment -%}
 {%- capture pages -%}[
+{%- unless cf.language == 'en' -%}
 {%- for k in (0..9) -%}
   {%- case k -%}{%- when 0 -%}{%- assign w = w0 -%}{%- when 1 -%}{%- assign w = w1 -%}{%- when 2 -%}{%- assign w = w2 -%}
   {%- when 3 -%}{%- assign w = w3 -%}{%- when 4 -%}{%- assign w = w4 -%}{%- when 5 -%}{%- assign w = w5 -%}{%- when 6 -%}{%- assign w = w6 -%}
@@ -111,12 +112,15 @@ de ses premiers livres est gardée (titre, auteur, éditeur, date, EAN), null si
     {%- endfor -%}]
   {%- else -%}[]
   {%- endif -%}
-{%- endfor -%}]{%- endcapture -%}
+{%- endfor -%}
+{%- endunless -%}]{%- endcapture -%}
 <div class="bp bp--{{ size }}{% if cf.style == 'color' %} bp--color{% else %} bp--eink{% endif %}"
-     data-lang="{{ cf.language | default: 'fr' }}" data-featured="{{ cf.featured | default: 'rotate' }}"
+     data-lang="{{ cf.language | default: 'fr' }}" data-key="{% if cf.hardcover_token != blank %}1{% endif %}" data-featured="{{ cf.featured | default: 'rotate' }}"
      data-genre="{{ cf.genre | join: ',' | default: '1000000' }}" data-ts="{{ ts }}" data-off="{{ off | default: 0 }}">
   <!-- pour chaque rayon : les plus demandés à paraître d'ici six semaines, puis ceux parus ces deux dernières semaines -->
   <script type="application/json" class="bp-pages">{{ pages }}</script>
+  <!-- en anglais, la réponse Hardcover : à paraître d'ici six semaines et parus ces deux dernières semaines -->
+  <script type="application/json" class="bp-hc">{% if cf.language == 'en' and hc %}{{ hc | json }}{% else %}null{% endif %}</script>
   <div class="bp-sky">
     <svg class="bp-rays" viewBox="0 0 1280 540" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg">
       <defs>
@@ -184,7 +188,8 @@ de ses premiers livres est gardée (titre, auteur, éditeur, date, EAN), null si
       rank: function (n) { return 'Nº ' + n + ' des plus attendus'; },
       since: function (n) { return n === 0 ? 'Paraît aujourd\'hui' : n === 1 ? 'Paru hier' : 'Paru il y a ' + n + ' jours'; },
       out: function (n) { return n === 0 ? 'Paraît aujourd\'hui' : n === 1 ? 'Paraît demain' : 'Paraît dans ' + n + ' jours'; },
-      shelves: function (n) { return n + ' rayons'; }, by: 'de ', then: 'Ensuite : ', also: 'Aussi : ', tagNew: 'Nouveau',
+      shelves: function (n) { return n + ' rayons'; },
+      readers: function (n) { return n + ' lecteurs'; }, by: 'de ', then: 'Ensuite : ', also: 'Aussi : ', tagNew: 'Nouveau',
       outIn: 'Parution', sinceK: 'Paru il y a', day: 'jour', daysW: 'jours', today: 'Auj.',
       offlineMeta: 'Parutions indisponibles', offline: 'Hors ligne', noFeed: 'Impossible de joindre Place des Libraires pour le moment.',
       emptyMeta: 'Rien à afficher', empty: 'Aucun livre', emptyTxt: 'Aucune parution trouvée dans ce rayon.'
@@ -200,9 +205,11 @@ de ses premiers livres est gardée (titre, auteur, éditeur, date, EAN), null si
       rank: function (n) { return 'No. ' + n + ' most anticipated'; },
       since: function (n) { return n === 0 ? 'Out today' : n === 1 ? 'Out since yesterday' : 'Out for ' + n + ' days'; },
       out: function (n) { return n === 0 ? 'Out today' : n === 1 ? 'Out tomorrow' : 'Out in ' + n + ' days'; },
-      shelves: function (n) { return n + ' shelves'; }, by: 'by ', then: 'Next: ', also: 'Also: ', tagNew: 'New',
+      shelves: function (n) { return n + ' shelves'; },
+      readers: function (n) { return n.toLocaleString('en-US') + (n === 1 ? ' reader' : ' readers'); }, by: 'by ', then: 'Next: ', also: 'Also: ', tagNew: 'New',
       outIn: 'Out in', sinceK: 'Out for', day: 'day', daysW: 'days', today: 'Today',
-      offlineMeta: 'Releases unavailable', offline: 'Offline', noFeed: 'Unable to reach Place des Libraires right now.',
+      offlineMeta: 'Releases unavailable', offline: 'Offline', noFeed: 'Unable to reach Hardcover right now.',
+      keyMeta: 'API key missing', key: 'Hardcover key', keyTxt: 'Add your Hardcover API key in the plugin settings.',
       emptyMeta: 'Nothing to show', empty: 'No books', emptyTxt: 'No release found on this shelf.'
     }
   };
@@ -237,6 +244,19 @@ de ses premiers livres est gardée (titre, auteur, éditeur, date, EAN), null si
     }).filter(function (b) { return b && b.title; });
   }
 
+  // Une liste Hardcover, déjà triée par nombre de lecteurs qui suivent le livre
+  function hardcover(list) {
+    return (list || []).map(function (b, rank) {
+      var m = /^(\d{4})-(\d\d)-(\d\d)/.exec(b.release_date || '');
+      var authors = (b.cached_contributors || []).filter(function (c) { return !c.contribution || c.contribution === 'Author'; })
+        .map(function (c) { return c.author && c.author.name; }).filter(Boolean);
+      var ed = b.default_physical_edition;
+      return m && b.title ? { title: b.title, authors: authors, publisher: ed && ed.publisher ? ed.publisher.name : '', ean: 'hc' + b.id,
+                              cover: b.cached_image && b.cached_image.url, readers: b.users_count, rank: rank,
+                              day: Math.floor(Date.UTC(+m[1], m[2] - 1, +m[3]) / 864e5) } : null;
+    }).filter(Boolean);
+  }
+
   // Les listes d'un même type (0 : à paraître, 1 : juste parus) de chaque rayon, fusionnées rang par rang
   // pour que chaque rayon ait sa part en tête ; un livre rangé dans plusieurs rayons n'est compté qu'une fois
   function merge(pages, type) {
@@ -254,7 +274,7 @@ de ses premiers livres est gardée (titre, auteur, éditeur, date, EAN), null si
     var q = function (s) { return root.querySelector(s); };
     var lang = root.dataset.lang === 'en' ? 'en' : 'fr', t = I18N[lang];
     var ts = parseInt(root.dataset.ts, 10) || Math.floor(Date.now() / 1000), off = parseInt(root.dataset.off, 10) || 0;
-    var pages = json(q('.bp-pages')) || [];
+    var pages = json(q('.bp-pages')) || [], hc = lang === 'en' ? json(q('.bp-hc')) : null, data = hc && (hc.data || hc);
 
     q('.bp-upd-long').textContent = t.updated;
     q('.bp-upd-short').textContent = t.upd;
@@ -267,12 +287,12 @@ de ses premiers livres est gardée (titre, auteur, éditeur, date, EAN), null si
       return long ? t.date(t.days[dt.getUTCDay()], t.months[dt.getUTCMonth()], dt.getUTCDate())
                   : t.dshort(t.mshort[dt.getUTCMonth()], dt.getUTCDate());
     };
-    var coming = merge(pages, 0).filter(function (b) { return b.day > today; });
+    var coming = (lang === 'en' ? hardcover(data && data.coming) : merge(pages, 0)).filter(function (b) { return b.day > today; });
     var lists = {
       // les plus demandés parmi ceux qui paraissent d'ici six semaines
       hot: coming,
       // parus ces deux dernières semaines, les plus demandés d'abord
-      now: merge(pages, 1).filter(function (b) { return b.day <= today && b.day > today - 14; }),
+      now: (lang === 'en' ? hardcover(data && data.recent) : merge(pages, 1)).filter(function (b) { return b.day <= today && b.day > today - 14; }),
       // les mêmes livres à paraître, du prochain au plus lointain ; le plus demandé d'abord pour un même jour
       upcoming: coming.slice().sort(function (a, b) { return a.day - b.day || a.rank - b.rank; })
     };
@@ -291,18 +311,19 @@ de ses premiers livres est gardée (titre, auteur, éditeur, date, EAN), null si
     q('.bp-k').textContent = t[sec || 'hot'] + (genre ? ' · ' + genre : '');
 
     if (!sec) {
-      var down = !pages.some(Array.isArray);
+      var nokey = lang === 'en' && !root.dataset.key;
+      var down = lang === 'en' ? !(data && Array.isArray(data.coming)) : !pages.some(Array.isArray);
       root.classList.add('bp--error', 'bp--noimg');
       q('.bp-k').textContent = 'BookPoster';
-      q('.bp-meta').textContent = down ? t.offlineMeta : t.emptyMeta;
-      q('.bp-title').textContent = down ? t.offline : t.empty;
-      q('.bp-by').textContent = down ? t.noFeed : t.emptyTxt;
+      q('.bp-meta').textContent = nokey ? t.keyMeta : down ? t.offlineMeta : t.emptyMeta;
+      q('.bp-title').textContent = nokey ? t.key : down ? t.offline : t.empty;
+      q('.bp-by').textContent = nokey ? t.keyTxt : down ? t.noFeed : t.emptyTxt;
       q('.bp-info').classList.add('bp-err');
       return fit(q('.bp-title'));
     }
 
     var list = lists[sec], b = list[idx], left = b.day - today;
-    cover(root, 'https://images.epagine.fr/' + b.ean.substr(10) + '/' + b.ean + '_1_75.jpg');
+    cover(root, b.readers == null ? 'https://images.epagine.fr/' + b.ean.substr(10) + '/' + b.ean + '_1_75.jpg' : b.cover);
     q('.bp-title').textContent = b.title;
 
     var meta;
@@ -317,6 +338,7 @@ de ses premiers livres est gardée (titre, auteur, éditeur, date, EAN), null si
 
     var by = b.authors.length ? t.by + '<b>' + b.authors.slice(0, 2).map(esc).join(', ') + (b.authors.length > 2 ? '…' : '') + '</b>' : '';
     if (b.publisher) by += (by ? ' · ' : '') + esc(b.publisher);
+    if (b.readers) by += (by ? ' · ' : '') + t.readers(b.readers);
     q('.bp-by').innerHTML = by;
 
     var others = [];
@@ -339,9 +361,10 @@ de ses premiers livres est gardée (titre, auteur, éditeur, date, EAN), null si
   }
 
   // Couverture cadrée à son format d'origine dans la zone du ciel ;
-  // sans couverture, le site renvoie une vignette « pas d'image » de 154 × 173
+  // sans couverture, Place des Libraires renvoie une vignette « pas d'image » de 154 × 173
   function cover(root, url) {
     var img = root.querySelector('.bp-cover'), frame = root.querySelector('.bp-frame'), art = root.querySelector('.bp-art');
+    if (!url) return root.classList.add('bp--noimg');
     var place = function () {
       var w = img.naturalWidth, h = img.naturalHeight;
       if (!w || !h || (w === 154 && h === 173)) return root.classList.add('bp--noimg');

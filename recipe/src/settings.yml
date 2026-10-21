@@ -1,10 +1,16 @@
 ---
 name: BookPoster
 strategy: polling
-polling_verb: get
-# deux listes Place des Libraires par rayon (quatre rayons au plus, pour rester sous la limite de taille de LaraPaper), les plus demandés d'abord :
-# à paraître d'ici six semaines, parus ces deux dernières semaines ; le site ne cherche que dans un rayon à la fois
+polling_verb: post
+# en français : deux listes Place des Libraires par rayon (quatre rayons au plus, pour rester sous la limite de taille
+# de LaraPaper), les plus demandés d'abord : à paraître d'ici six semaines, parus ces deux dernières semaines ;
+# le site ne cherche que dans un rayon à la fois et accepte le POST vide.
+# en anglais : une requête GraphQL Hardcover (voir polling_body)
 polling_url: |-
+  {%- case language -%}
+  {%- when 'en' -%}
+  https://api.hardcover.app/v1/graphql
+  {%- else -%}
   {%- assign now = 'now' | date: '%s' | plus: 0 -%}
   {%- assign today = now | date: '%d/%m/%Y' -%}
   {%- assign tomorrow = now | plus: 86400 | date: '%d/%m/%Y' -%}
@@ -17,8 +23,46 @@ polling_url: |-
   {{ base }}&datemin={{ tomorrow }}&datemax={{ later }}
   {{ base }}&datemin={{ before }}&datemax={{ today }}
   {% endfor -%}
-# le site refuse les robots qui ne se présentent pas comme un navigateur
-polling_headers: User-Agent=Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0 Safari/537.36
+  {%- endcase -%}
+# Place des Libraires refuse les robots qui ne se présentent pas comme un navigateur ; Hardcover demande un jeton
+# (pas de signe égal dans ce gabarit : LaraPaper le change en deux-points à l'import)
+polling_headers: |-
+  {%- case language -%}
+  {%- when 'en' -%}
+  Authorization=Bearer {{ hardcover_token | remove: 'Bearer' | strip }}
+  User-Agent=BookPoster (TRMNL plugin)
+  {%- else -%}
+  User-Agent=Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0 Safari/537.36
+  {%- endcase -%}
+# Hardcover : les livres les plus suivis, à paraître d'ici six semaines et parus ces deux dernières semaines,
+# dans les genres Hardcover qui correspondent aux rayons choisis
+polling_body: |-
+  {%- case language -%}
+  {%- when 'en' -%}
+  {%- assign now = 'now' | date: '%s' | plus: 0 -%}
+  {%- assign shelves = genre | join: ',' | default: '1000000' | split: ',' -%}
+  {%- capture slugs -%}
+  {%- for shelf in shelves -%}
+  {%- case shelf -%}
+  {%- when '1000000' -%},fiction,literature,literary-fiction,historical-fiction,short-stories,poetry
+  {%- when '1000000-1010000' -%},fiction,literary-fiction,historical-fiction
+  {%- when '90000000' -%},mystery,thriller,suspense,crime
+  {%- when '91000000' -%},fantasy,science-fiction,dystopian
+  {%- when '92000000' -%},romance,romantasy
+  {%- when '3000000-3020000' -%},comics,comics-graphic-novels,graphic-novels
+  {%- when '3000000-3040000' -%},manga
+  {%- when '2000000' -%},young-adult,young-adult-fiction,juvenile-fiction,children
+  {%- when '9000000' -%},history,philosophy,psychology,social-science,politics,biography,memoir,nonfiction
+  {%- when '6000000' -%},art-3edc3db2-a727-4df4-8e55-ba4130d4601b,music
+  {%- when '4000000' -%},cooking,self-help-e026dece-d926-4e01-9480-a316b3be0396,travel
+  {%- when 'all' -%},*
+  {%- endcase -%}
+  {%- endfor -%}
+  {%- endcapture -%}
+  {%- capture tags -%}{% unless slugs contains '*' %}, taggings: {tag: {slug: {_in: [\"{{ slugs | remove_first: ',' | split: ',' | uniq | join: '\", \"' }}\"]}}}{% endunless %}{%- endcapture -%}
+  {%- capture fields -%}title release_date users_count cached_image cached_contributors default_physical_edition { publisher { name } }{%- endcapture -%}
+  {"query": "query { coming: books(where: {release_date: {_gt: \"{{ now | date: '%Y-%m-%d' }}\", _lte: \"{{ now | plus: 3628800 | date: '%Y-%m-%d' }}\"}, book_status_id: {_eq: 1}{{ tags }}}, order_by: {users_count: desc}, limit: 20) { id {{ fields }} } recent: books(where: {release_date: {_gt: \"{{ now | minus: 1209600 | date: '%Y-%m-%d' }}\", _lte: \"{{ now | date: '%Y-%m-%d' }}\"}, book_status_id: {_eq: 1}{{ tags }}}, order_by: {users_count: desc}, limit: 20) { id {{ fields }} } }"}
+  {%- endcase -%}
 refresh_interval: 60
 no_screen_padding: 'yes'
 dark_mode: 'no'
@@ -27,7 +71,12 @@ custom_fields:
 - keyname: about
   field_type: author_bio
   name: BookPoster
-  description: "Les livres les plus attendus, les parutions récentes et à venir en France, façon affiche. Données et couvertures : Place des Libraires. / The most anticipated books, fresh and upcoming releases in France, drawn as a poster."
+  description: "Les livres les plus attendus, les parutions récentes et à venir, façon affiche. En français : Place des Libraires ; en anglais : Hardcover. / The most anticipated books, fresh and upcoming releases, drawn as a poster. In English: Hardcover; in French: Place des Libraires."
+- keyname: hardcover_token
+  field_type: password
+  name: Hardcover API key / Clé d'API Hardcover
+  description: "English only: releases come from Hardcover. hardcover.app → Settings → Hardcover API → New API Key. / Seulement en anglais : les parutions viennent alors de Hardcover."
+  optional: true
 - keyname: genre
   field_type: select
   name: Genres
@@ -69,6 +118,7 @@ custom_fields:
 - keyname: language
   field_type: select
   name: Language / Langue
+  description: "Also picks the releases: French books from Place des Libraires, or English books from Hardcover (API key needed). / Choisit aussi les parutions : livres français de Place des Libraires, ou livres anglais de Hardcover (clé d'API nécessaire)."
   options:
   - English: en
   - Français: fr
