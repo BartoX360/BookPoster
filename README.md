@@ -107,7 +107,7 @@ Les scripts visent un serveur LaraPaper en Docker (conteneur `larapaper-app-1`) 
 
 *What's coming out in bookstores, drawn as a poster.*
 
-A TRMNL plugin that puts one book on a poster: the most anticipated books, the ones just out or the next releases, with its cover, author, publisher and a countdown to its release. It is part of the Poster suite with [FlightPoster](https://github.com/BartoX360/FlightPoster), [WeatherPoster](https://github.com/BartoX360/WeatherPoster), [GamePoster](https://github.com/BartoX360/GamePoster), [MoviePoster](https://github.com/BartoX360/MoviePoster) and [ShowPoster](https://github.com/BartoX360/ShowPoster)and shares their look.
+A TRMNL plugin that puts one book on a poster: the most anticipated books, the ones just out or the next releases, with its cover, author, publisher and a countdown to its release. It is part of the Poster suite with [FlightPoster](https://github.com/BartoX360/FlightPoster), [WeatherPoster](https://github.com/BartoX360/WeatherPoster), [GamePoster](https://github.com/BartoX360/GamePoster), [MoviePoster](https://github.com/BartoX360/MoviePoster) and [ShowPoster](https://github.com/BartoX360/ShowPoster), and shares their look.
 
 Releases differ between English and French books, so the language also picks the source.
 

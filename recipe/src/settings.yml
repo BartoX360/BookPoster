@@ -71,7 +71,7 @@ custom_fields:
 - keyname: about
   field_type: author_bio
   name: BookPoster
-  description: "Les livres les plus attendus, les parutions récentes et à venir, façon affiche. En français : Place des Libraires ; en anglais : Hardcover. / The most anticipated books, fresh and upcoming releases, drawn as a poster. In English: Hardcover; in French: Place des Libraires. v1.0.0"
+  description: "Les livres les plus attendus, les parutions récentes et à venir, façon affiche. En français : Place des Libraires ; en anglais : Hardcover. / The most anticipated books, fresh and upcoming releases, drawn as a poster. In English: Hardcover; in French: Place des Libraires. v1.0.1"
   github_url: https://github.com/BartoX360/BookPoster
 - keyname: hardcover_token
   field_type: password
