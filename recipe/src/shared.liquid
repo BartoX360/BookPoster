@@ -186,8 +186,6 @@ de ses premiers livres est gardée (titre, auteur, éditeur, date, EAN), null si
       date: function (d, m, n) { return d + ' ' + (n === 1 ? '1er' : n) + ' ' + m; },
       dshort: function (m, n) { return n + ' ' + m; },
       rank: function (n) { return 'Nº ' + n + ' des plus attendus'; },
-      since: function (n) { return n === 0 ? 'Paraît aujourd\'hui' : n === 1 ? 'Paru hier' : 'Paru il y a ' + n + ' jours'; },
-      out: function (n) { return n === 0 ? 'Paraît aujourd\'hui' : n === 1 ? 'Paraît demain' : 'Paraît dans ' + n + ' jours'; },
       shelves: function (n) { return n + ' rayons'; },
       readers: function (n) { return n + ' lecteurs'; }, by: 'de ', then: 'Ensuite : ', also: 'Aussi : ', tagNew: 'Nouveau',
       outIn: 'Parution', sinceK: 'Paru il y a', day: 'jour', daysW: 'jours', today: 'Auj.',
@@ -203,8 +201,6 @@ de ses premiers livres est gardée (titre, auteur, éditeur, date, EAN), null si
       date: function (d, m, n) { return d + ', ' + m + ' ' + n; },
       dshort: function (m, n) { return m + ' ' + n; },
       rank: function (n) { return 'No. ' + n + ' most anticipated'; },
-      since: function (n) { return n === 0 ? 'Out today' : n === 1 ? 'Out since yesterday' : 'Out for ' + n + ' days'; },
-      out: function (n) { return n === 0 ? 'Out today' : n === 1 ? 'Out tomorrow' : 'Out in ' + n + ' days'; },
       shelves: function (n) { return n + ' shelves'; },
       readers: function (n) { return n.toLocaleString('en-US') + (n === 1 ? ' reader' : ' readers'); }, by: 'by ', then: 'Next: ', also: 'Also: ', tagNew: 'New',
       outIn: 'Out in', sinceK: 'Out for', day: 'day', daysW: 'days', today: 'Today',
@@ -331,9 +327,9 @@ de ses premiers livres est gardée (titre, auteur, éditeur, date, EAN), null si
       meta = t.rank(idx + 1) + ' · ' + when(b, true);
       q('.bp-tag').textContent = 'Nº ' + (idx + 1);
     } else if (sec === 'now') {
-      meta = t.since(Math.max(0, -left)) + ' · ' + when(b, true);
+      meta = when(b, true);
       if (-left < 7) q('.bp-tag').textContent = t.tagNew;
-    } else meta = t.out(Math.max(0, left)) + ' · ' + when(b, true);
+    } else meta = when(b, true);
     q('.bp-meta').textContent = meta;
 
     var by = b.authors.length ? t.by + '<b>' + b.authors.slice(0, 2).map(esc).join(', ') + (b.authors.length > 2 ? '…' : '') + '</b>' : '';
