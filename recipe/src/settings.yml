@@ -1,0 +1,77 @@
+---
+name: BookPoster
+strategy: polling
+polling_verb: get
+# trois listes Place des Libraires, les plus demandées d'abord : à paraître d'ici deux mois,
+# parus ces deux dernières semaines, à paraître d'ici deux semaines
+polling_url: |-
+  {%- assign now = 'now' | date: '%s' | plus: 0 -%}
+  {%- assign today = now | date: '%d/%m/%Y' -%}
+  {%- assign tomorrow = now | plus: 86400 | date: '%d/%m/%Y' -%}
+  {%- assign g = genre | default: '1000000' | split: '-' -%}
+  {%- capture base -%}https://www.placedeslibraires.fr/listeliv.php?form_recherche_avancee=ok&base=paper&select_tri_recherche=pertinence{% if g[0] != 'all' %}&codegtl1={{ g[0] }}{% if g[1] %}&codegtl2={{ g[1] }}{% endif %}{% endif %}{% if pocket != 'yes' and g[1] != '3040000' %}&code_support=T{% endif %}{%- endcapture -%}
+  {{ base }}&datemin={{ tomorrow }}&datemax={{ now | plus: 5184000 | date: '%d/%m/%Y' }}
+  {{ base }}&datemin={{ now | minus: 1209600 | date: '%d/%m/%Y' }}&datemax={{ today }}
+  {{ base }}&datemin={{ tomorrow }}&datemax={{ now | plus: 1209600 | date: '%d/%m/%Y' }}
+# le site refuse les robots qui ne se présentent pas comme un navigateur
+polling_headers: User-Agent=Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0 Safari/537.36
+refresh_interval: 60
+no_screen_padding: 'yes'
+dark_mode: 'no'
+static_data: ''
+custom_fields:
+- keyname: about
+  field_type: author_bio
+  name: BookPoster
+  description: "Les livres les plus attendus, les parutions récentes et à venir en France, façon affiche. Données et couvertures : Place des Libraires. / The most anticipated books, fresh and upcoming releases in France, drawn as a poster."
+- keyname: genre
+  field_type: select
+  name: Genre
+  description: Le rayon des livres à l'affiche. / The shelf the books come from.
+  options:
+  - Littérature: '1000000'
+  - Romans & nouvelles: 1000000-1010000
+  - Polar & thriller: '90000000'
+  - Fantasy & science-fiction: '91000000'
+  - Romance: '92000000'
+  - Bandes dessinées: 3000000-3020000
+  - Mangas: 3000000-3040000
+  - Jeunesse: '2000000'
+  - Sciences humaines: '9000000'
+  - Arts & spectacles: '6000000'
+  - Vie pratique & loisirs: '4000000'
+  - Tous les livres / All books: all
+  default: '1000000'
+- keyname: pocket
+  field_type: select
+  name: Poches / Paperbacks
+  description: Les rééditions en poche, écartées par défaut pour ne garder que les nouveautés. Toujours incluses pour les mangas. / Paperback reissues, left out by default.
+  options:
+  - Sans les poches / Without: 'no'
+  - Avec les poches / With: 'yes'
+  default: 'no'
+- keyname: featured
+  field_type: select
+  name: Poster / Affiche
+  description: Which book gets the poster. Rotate changes every hour between the most anticipated books, the fresh releases and the next ones.
+  options:
+  - Rotate / Rotation: rotate
+  - Most anticipated / Les plus attendus: hot
+  - Just out / Juste parus: now
+  - Coming soon / Prochainement: upcoming
+  default: rotate
+- keyname: language
+  field_type: select
+  name: Language / Langue
+  options:
+  - English: en
+  - Français: fr
+  default: fr
+- keyname: style
+  field_type: select
+  name: Style
+  description: E-ink for black & white screens (TRMNL), Color for LCD screens.
+  options:
+  - E-ink: eink
+  - Color / Couleur: color
+  default: eink
