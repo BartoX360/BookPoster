@@ -44,6 +44,9 @@ Les sorties ne sont pas les mêmes des deux côtés de la Manche : la langue cho
 
 ### Installation
 
+> [!NOTE]
+> Ce plugin est développé et testé uniquement sur [LaraPaper](https://github.com/usetrmnl/larapaper). Il devrait fonctionner sur usetrmnl.com et les autres serveurs TRMNL, mais il n'y a pas été testé : les retours sont les bienvenus dans les issues.
+
 Pour les parutions anglophones, il faut d'abord une clé d'API Hardcover : sur [hardcover.app](https://hardcover.app), *Settings → Hardcover API → New API Key*.
 
 **LaraPaper / BYOS** : *Plugins → Import recipe*, choisissez `bookposter-x.y.z.zip` dans la [dernière release](https://github.com/BartoX360/BookPoster/releases/latest) (ou zippez le contenu de `recipe/src/`), puis choisissez vos réglages.
@@ -133,6 +136,9 @@ Releases differ between English and French books, so the language also picks the
 | Color · just out | Quadrant |
 
 ### Installation
+
+> [!NOTE]
+> This plugin is built and tested on [LaraPaper](https://github.com/usetrmnl/larapaper) only. It should work on usetrmnl.com and other TRMNL servers, but it has not been tested there: feedback is welcome in the issues.
 
 For English releases, first get a Hardcover API key: on [hardcover.app](https://hardcover.app), *Settings → Hardcover API → New API Key*.
 
