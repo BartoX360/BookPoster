@@ -10,7 +10,7 @@
 
 *Ce qui paraît en librairie, façon affiche.*
 
-Un plugin TRMNL qui met un livre à l'affiche : les livres les plus attendus, ceux qui viennent de paraître ou les prochaines parutions, avec sa couverture, son auteur, son éditeur et un compte à rebours avant sa sortie. Il fait partie de la suite Poster avec [FlightPoster](https://github.com/BartoX360/FlightPoster), [WeatherPoster](https://github.com/BartoX360/WeatherPoster), [GamePoster](https://github.com/BartoX360/GamePoster), [MoviePoster](https://github.com/BartoX360/MoviePoster) et [ShowPoster](https://github.com/BartoX360/ShowPoster), dont il reprend le style.
+Un plugin TRMNL qui met un livre à l'affiche : les livres les plus attendus, ceux qui viennent de paraître ou les prochaines parutions, avec sa couverture, son auteur, son éditeur et un compte à rebours avant sa sortie. Il fait partie de la suite Poster avec [FlightPoster](https://github.com/BartoX360/FlightPoster), [WeatherPoster](https://github.com/BartoX360/WeatherPoster), [GamePoster](https://github.com/BartoX360/GamePoster), [MoviePoster](https://github.com/BartoX360/MoviePoster) et [ShowPoster](https://github.com/BartoX360/ShowPoster)dont il reprend le style.
 
 Les sorties ne sont pas les mêmes des deux côtés de la Manche : la langue choisit aussi la source.
 
@@ -46,7 +46,7 @@ Les sorties ne sont pas les mêmes des deux côtés de la Manche : la langue cho
 
 Pour les parutions anglophones, il faut d'abord une clé d'API Hardcover : sur [hardcover.app](https://hardcover.app), *Settings → Hardcover API → New API Key*.
 
-**LaraPaper / BYOS** : *Plugins → Import recipe*, choisissez `recipe/bookposter.zip` (créé par `recipe_render.sh`, ou zippez le contenu de `recipe/src/`), puis choisissez vos réglages.
+**LaraPaper / BYOS** : *Plugins → Import recipe*, choisissez `bookposter-x.y.z.zip` dans la [dernière release](https://github.com/BartoX360/BookPoster/releases/latest) (ou zippez le contenu de `recipe/src/`), puis choisissez vos réglages.
 
 **TRMNL (usetrmnl.com)** : créez un *Private Plugin* avec la stratégie *Polling*, puis copiez :
 - `polling_url`, `polling_headers` et `polling_body` de `recipe/src/settings.yml` dans *Polling URL*, *Polling headers* et *Polling body* (verbe *POST*) ;
@@ -80,13 +80,15 @@ Le dossier `recipe/src/` suit l'organisation de [trmnlp](https://github.com/uset
 
 | Fichier | Rôle |
 |---|---|
-| `recipe_render.sh <dossier>` | Zippe la recette, l'importe dans LaraPaper comme « BookPoster (test) », rend chaque cas de test et copie les PNG dans `<dossier>` ; avec `LIVE=1`, vérifie aussi les listes réelles et la taille de la charge pour quatre rayons, ainsi que Hardcover si `.hardcover_token` existe |
-| `recipe_test.php` | Les cas de test (rubrique, rotation, plusieurs rayons, les deux sources, format, appareil, langue, couverture manquante, erreurs, rayon vide), exécutés dans LaraPaper |
-| `test_payload.json` | Les listes de littérature et de polar figées le 21 octobre 2026, utilisées par les cas de test |
-| `test_payload_en.json` | La réponse Hardcover (littérature) figée le 21 octobre 2026 |
-| `.hardcover_token` | Votre jeton Hardcover pour `LIVE=1`, ignoré par git |
-| `update.php` | Copie le code de « BookPoster (test) » dans le plugin installé, sans toucher à ses réglages |
-| `install.php` | Première installation : importe la recette comme « BookPoster » |
+| `dev/recipe_render.sh <dossier>` | Zippe la recette, l'importe dans LaraPaper comme « BookPoster (test) », rend chaque cas de test et copie les PNG dans `<dossier>` ; avec `LIVE=1`, vérifie aussi les listes réelles et la taille de la charge pour quatre rayons, ainsi que Hardcover si `dev/.hardcover_token` existe |
+| `dev/recipe_test.php` | Les cas de test (rubrique, rotation, plusieurs rayons, les deux sources, format, appareil, langue, couverture manquante, erreurs, rayon vide), exécutés dans LaraPaper |
+| `dev/test_payload.json` | Les listes de littérature et de polar figées le 21 octobre 2026, utilisées par les cas de test |
+| `dev/test_payload_en.json` | La réponse Hardcover (littérature) figée le 21 octobre 2026 |
+| `dev/.hardcover_token` | Votre jeton Hardcover pour `LIVE=1`, ignoré par git |
+| `dev/update.php` | Copie le code de « BookPoster (test) » dans le plugin installé, sans toucher à ses réglages |
+| `dev/install.php` | Première installation : importe la recette comme « BookPoster » |
+
+Les scripts visent un serveur LaraPaper en Docker (conteneur `larapaper-app-1`) joignable en SSH, désigné par `LARAPAPER_SSH` (ex. `root@mon-serveur`), dans l'environnement ou dans `dev/.env` (ignoré par git).
 
 ### Notes
 
@@ -102,7 +104,7 @@ Le dossier `recipe/src/` suit l'organisation de [trmnlp](https://github.com/uset
 
 *What's coming out in bookstores, drawn as a poster.*
 
-A TRMNL plugin that puts one book on a poster: the most anticipated books, the ones just out or the next releases, with its cover, author, publisher and a countdown to its release. It is part of the Poster suite with [FlightPoster](https://github.com/BartoX360/FlightPoster), [WeatherPoster](https://github.com/BartoX360/WeatherPoster), [GamePoster](https://github.com/BartoX360/GamePoster), [MoviePoster](https://github.com/BartoX360/MoviePoster) and [ShowPoster](https://github.com/BartoX360/ShowPoster), and shares their look.
+A TRMNL plugin that puts one book on a poster: the most anticipated books, the ones just out or the next releases, with its cover, author, publisher and a countdown to its release. It is part of the Poster suite with [FlightPoster](https://github.com/BartoX360/FlightPoster), [WeatherPoster](https://github.com/BartoX360/WeatherPoster), [GamePoster](https://github.com/BartoX360/GamePoster), [MoviePoster](https://github.com/BartoX360/MoviePoster) and [ShowPoster](https://github.com/BartoX360/ShowPoster)and shares their look.
 
 Releases differ between English and French books, so the language also picks the source.
 
@@ -134,7 +136,7 @@ Releases differ between English and French books, so the language also picks the
 
 For English releases, first get a Hardcover API key: on [hardcover.app](https://hardcover.app), *Settings → Hardcover API → New API Key*.
 
-**LaraPaper / BYOS**: *Plugins → Import recipe*, pick `recipe/bookposter.zip` (built by `recipe_render.sh`, or zip the contents of `recipe/src/`), then pick your settings.
+**LaraPaper / BYOS**: *Plugins → Import recipe*, pick `bookposter-x.y.z.zip` from the [latest release](https://github.com/BartoX360/BookPoster/releases/latest) (or zip the contents of `recipe/src/`), then pick your settings.
 
 **TRMNL (usetrmnl.com)**: create a *Private Plugin* with the *Polling* strategy, then copy `polling_url`, `polling_headers` and `polling_body` (verb *POST*), the `custom_fields`, `shared.liquid` and each layout from `recipe/src/`. The plugin is built and tested on LaraPaper; HTML responses of up to 4 MB are not checked on usetrmnl.com.
 
@@ -165,3 +167,9 @@ For English releases, first get a Hardcover API key: on [hardcover.app](https://
 - Place des Libraires turns away requests that don't look like a browser, hence the polling `User-Agent` header.
 - A refresh interval of 60 minutes keeps the rotation going, two pages per shelf an hour.
 - The data belongs to Place des Libraires; the plugin only displays it for personal use.
+
+---
+
+## Licence / License
+
+Code sous licence [MIT](LICENSE). Les données affichées appartiennent à leurs sources respectives. / Code released under the [MIT](LICENSE) license. The data shown belongs to its respective sources.

@@ -1,6 +1,9 @@
 .DS_Store
 # Rendus de test et capture de l'écran réel
 previews/
-recipe/bookposter.zip
+# Recette zippée, publiée dans les releases
+recipe/*.zip
+# Réglages locaux des scripts de développement
+dev/.env
 # Jeton Hardcover de développement
-.hardcover_token
+dev/.hardcover_token
