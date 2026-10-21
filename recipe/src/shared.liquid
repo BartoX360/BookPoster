@@ -94,11 +94,13 @@
 </style>
 
 {% template bookposter %}
-{%- comment -%} chaque liste Place des Libraires est une page HTML : seule l'en-tête de ses premiers livres est gardée
-(titre, auteur, éditeur, date, EAN), null si la page n'a pas pu être chargée {%- endcomment -%}
+{%- comment -%} deux listes Place des Libraires par rayon (à paraître, juste parus), chacune une page HTML : seule l'en-tête
+de ses premiers livres est gardée (titre, auteur, éditeur, date, EAN), null si la page n'a pas pu être chargée {%- endcomment -%}
 {%- capture pages -%}[
-{%- for k in (0..2) -%}
-  {%- case k -%}{%- when 0 -%}{%- assign w = w0 -%}{%- when 1 -%}{%- assign w = w1 -%}{%- else -%}{%- assign w = w2 -%}{%- endcase -%}
+{%- for k in (0..9) -%}
+  {%- case k -%}{%- when 0 -%}{%- assign w = w0 -%}{%- when 1 -%}{%- assign w = w1 -%}{%- when 2 -%}{%- assign w = w2 -%}
+  {%- when 3 -%}{%- assign w = w3 -%}{%- when 4 -%}{%- assign w = w4 -%}{%- when 5 -%}{%- assign w = w5 -%}{%- when 6 -%}{%- assign w = w6 -%}
+  {%- when 7 -%}{%- assign w = w7 -%}{%- when 8 -%}{%- assign w = w8 -%}{%- else -%}{%- assign w = w9 -%}{%- endcase -%}
   {%- unless forloop.first -%},{%- endunless -%}
   {%- if w.data == blank -%}null
   {%- elsif w.data contains 'id="liste_livres"' -%}[
@@ -112,8 +114,8 @@
 {%- endfor -%}]{%- endcapture -%}
 <div class="bp bp--{{ size }}{% if cf.style == 'color' %} bp--color{% else %} bp--eink{% endif %}"
      data-lang="{{ cf.language | default: 'fr' }}" data-featured="{{ cf.featured | default: 'rotate' }}"
-     data-genre="{{ cf.genre | default: '1000000' }}" data-ts="{{ ts }}" data-off="{{ off | default: 0 }}">
-  <!-- les plus demandés à paraître, parus ces deux dernières semaines, à paraître d'ici deux semaines -->
+     data-genre="{{ cf.genre | join: ',' | default: '1000000' }}" data-ts="{{ ts }}" data-off="{{ off | default: 0 }}">
+  <!-- pour chaque rayon : les plus demandés à paraître d'ici six semaines, puis ceux parus ces deux dernières semaines -->
   <script type="application/json" class="bp-pages">{{ pages }}</script>
   <div class="bp-sky">
     <svg class="bp-rays" viewBox="0 0 1280 540" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg">
@@ -182,7 +184,7 @@
       rank: function (n) { return 'Nº ' + n + ' des plus attendus'; },
       since: function (n) { return n === 0 ? 'Paraît aujourd\'hui' : n === 1 ? 'Paru hier' : 'Paru il y a ' + n + ' jours'; },
       out: function (n) { return n === 0 ? 'Paraît aujourd\'hui' : n === 1 ? 'Paraît demain' : 'Paraît dans ' + n + ' jours'; },
-      by: 'de ', then: 'Ensuite : ', also: 'Aussi : ', tagNew: 'Nouveau',
+      shelves: function (n) { return n + ' rayons'; }, by: 'de ', then: 'Ensuite : ', also: 'Aussi : ', tagNew: 'Nouveau',
       outIn: 'Parution', sinceK: 'Paru il y a', day: 'jour', daysW: 'jours', today: 'Auj.',
       offlineMeta: 'Parutions indisponibles', offline: 'Hors ligne', noFeed: 'Impossible de joindre Place des Libraires pour le moment.',
       emptyMeta: 'Rien à afficher', empty: 'Aucun livre', emptyTxt: 'Aucune parution trouvée dans ce rayon.'
@@ -198,7 +200,7 @@
       rank: function (n) { return 'No. ' + n + ' most anticipated'; },
       since: function (n) { return n === 0 ? 'Out today' : n === 1 ? 'Out since yesterday' : 'Out for ' + n + ' days'; },
       out: function (n) { return n === 0 ? 'Out today' : n === 1 ? 'Out tomorrow' : 'Out in ' + n + ' days'; },
-      by: 'by ', then: 'Next: ', also: 'Also: ', tagNew: 'New',
+      shelves: function (n) { return n + ' shelves'; }, by: 'by ', then: 'Next: ', also: 'Also: ', tagNew: 'New',
       outIn: 'Out in', sinceK: 'Out for', day: 'day', daysW: 'days', today: 'Today',
       offlineMeta: 'Releases unavailable', offline: 'Offline', noFeed: 'Unable to reach Place des Libraires right now.',
       emptyMeta: 'Nothing to show', empty: 'No books', emptyTxt: 'No release found on this shelf.'
@@ -235,6 +237,18 @@
     }).filter(function (b) { return b && b.title; });
   }
 
+  // Les listes d'un même type (0 : à paraître, 1 : juste parus) de chaque rayon, fusionnées rang par rang
+  // pour que chaque rayon ait sa part en tête ; un livre rangé dans plusieurs rayons n'est compté qu'une fois
+  function merge(pages, type) {
+    var seen = {}, all = [];
+    pages.forEach(function (p, i) {
+      if (i % 2 !== type) return;
+      books(p).forEach(function (b, rank) { b.rank = rank; b.shelf = i; all.push(b); });
+    });
+    return all.sort(function (a, b) { return a.rank - b.rank || a.shelf - b.shelf; })
+      .filter(function (b) { return !seen[b.ean] && (seen[b.ean] = 1); });
+  }
+
   function render(root) {
     root.setAttribute('data-done', '1');
     var q = function (s) { return root.querySelector(s); };
@@ -253,15 +267,14 @@
       return long ? t.date(t.days[dt.getUTCDay()], t.months[dt.getUTCMonth()], dt.getUTCDate())
                   : t.dshort(t.mshort[dt.getUTCMonth()], dt.getUTCDate());
     };
+    var coming = merge(pages, 0).filter(function (b) { return b.day > today; });
     var lists = {
-      // les plus demandés parmi ceux qui paraissent d'ici deux mois
-      hot: books(pages[0]).filter(function (b) { return b.day > today; }),
+      // les plus demandés parmi ceux qui paraissent d'ici six semaines
+      hot: coming,
       // parus ces deux dernières semaines, les plus demandés d'abord
-      now: books(pages[1]).filter(function (b) { return b.day <= today && b.day > today - 14; }),
-      // la prochaine parution, puis les suivantes ; le plus demandé d'abord pour un même jour
-      upcoming: books(pages[2]).map(function (b, i) { b.rank = i; return b; })
-        .filter(function (b) { return b.day > today; })
-        .sort(function (a, b) { return a.day - b.day || a.rank - b.rank; })
+      now: merge(pages, 1).filter(function (b) { return b.day <= today && b.day > today - 14; }),
+      // les mêmes livres à paraître, du prochain au plus lointain ; le plus demandé d'abord pour un même jour
+      upcoming: coming.slice().sort(function (a, b) { return a.day - b.day || a.rank - b.rank; })
     };
 
     // Rubrique et livre à l'affiche : fixés par le réglage, ou une rotation horaire parmi les trois premiers de chaque rubrique
@@ -273,7 +286,8 @@
     }
     root.classList.add('bp--sec-' + (sec || 'hot'));
     rays(root);
-    var genre = GENRES[lang][root.dataset.genre];
+    var genres = root.dataset.genre.split(',').map(function (g) { return GENRES[lang][g]; }).filter(Boolean);
+    var genre = genres.length > 2 ? t.shelves(genres.length) : genres.join(' + ');
     q('.bp-k').textContent = t[sec || 'hot'] + (genre ? ' · ' + genre : '');
 
     if (!sec) {
